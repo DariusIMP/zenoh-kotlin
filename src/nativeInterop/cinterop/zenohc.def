@@ -1,0 +1,4 @@
+headers = zenoh.h
+compilerOpts.linux = -I/usr/include
+compilerOpts.osx = -I/usr/local/include
+linkerOpts = -L/usr/local/lib -lzenohc
