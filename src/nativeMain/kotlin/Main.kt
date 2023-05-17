@@ -1,9 +1,7 @@
 import kotlinx.cinterop.*
-import platform.posix.NULL
-import platform.posix.getchar
-import platform.posix.sleep
-import platform.posix.uint8_tVar
+import platform.posix.*
 import zenohc.*
+import kotlin.native.concurrent.freeze
 
 @OptIn(ExperimentalUnsignedTypes::class)
 fun put() {
@@ -19,20 +17,24 @@ fun put() {
         return
     }
 
-    println("Putting Data ('$keyExpression': '$value'...")
 
+    val k = z_keyexpr(keyExpression.cstr.getBytes().refTo(0))
+    println(k.getBytes().size)
+    k.getBytes().forEach { byte -> print("$byte, ") }
+    println("Putting Data ('$keyExpression': '$value'...)")
     var options = z_put_options_default()
     val result = z_put(
         z_session_loan(session),
-        z_keyexpr(keyExpression),
+        k,
         value.cstr.getBytes().toUByteArray().refTo(0),
         value.length.toULong(),
         options
     )
+
     if (result < 0) {
         println("Put failed...")
     }
-
+    println("Bye $keyExpression")
     z_close(session)
 }
 
@@ -52,27 +54,31 @@ fun publisher() {
 
     println("Declaring Publisher on $keyExpression...")
     val options_default = z_publisher_options_default()
-    val pub = z_declare_publisher(z_session_loan(session), z_keyexpr(keyExpression), options_default)
+    val pub = z_declare_publisher(z_session_loan(session), z_keyexpr(keyExpression.utf8), options_default)
     if (!z_publisher_check(pub)) {
         println("Unable to declare Publisher for key expression!")
         return
     }
 
-    val idx = 0
+    var idx = 0
     var buff = ""
     while (idx < 256) {
         sleep(1)
         buff = "[$idx] $value"
-        println("Putting Data ('$keyExpression': '$buff'...")
         var options = z_publisher_put_options_default()
-        // CValuesRef<uint8_tVar /* = UByteVarOf<uint8_t /* = UByte */> */>?
-        val buffer2 = buff.cstr.getBytes().toUByteArray()
-        z_publisher_put(
+//        val buffer2 = buff.utf8.getBytes().toUByteArray()
+        setPublisherEncoding(options, Z_ENCODING_PREFIX_TEXT_PLAIN)
+        println("Attempting to put data...")
+        val result = z_publisher_put(
             z_publisher_loan(pub),
-            buffer2.refTo(0),
-            buff.length.toULong(),
+            castPointer(buff.utf8),
+            (buff.length + 1).toULong(),
             options
         )
+        println("Putting Data ('$keyExpression': '$buff'...")
+        if (result < 0) {
+            println("Put failed!")
+        }
 
         println("SSS")
         idx.inc()
@@ -107,7 +113,7 @@ fun subscriber() {
 
     val sub = z_declare_subscriber(
         z_session_loan(session),
-        z_keyexpr(keyExpression),
+        z_keyexpr(keyExpression.utf8),
         callback,
         z_subscriber_options_default()
     )
@@ -131,7 +137,7 @@ fun subscriber() {
 }
 
 fun main(args: Array<String>) {
-    publisher()
+//    publisher()
 //    subscriber()
-//    put()
+    put()
 }

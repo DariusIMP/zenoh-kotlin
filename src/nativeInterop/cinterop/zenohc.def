@@ -2,3 +2,13 @@ headers = zenoh.h
 compilerOpts.linux = -I/usr/include
 compilerOpts.osx = -I/usr/local/include
 linkerOpts = -L/usr/local/lib -lzenohc
+noStringConversion = z_keyexpr
+---
+
+static inline uint8_t* castPointer(char* ptr) {
+    return (uint8_t*)ptr;
+}
+
+static inline void setPublisherEncoding(z_publisher_put_options_t* options, z_encoding_prefix_t encoding) {
+    options->encoding = z_encoding(encoding, NULL);
+}
