@@ -12,3 +12,7 @@ static inline uint8_t* castPointer(char* ptr) {
 static inline void setPublisherEncoding(z_publisher_put_options_t* options, z_encoding_prefix_t encoding) {
     options->encoding = z_encoding(encoding, NULL);
 }
+
+static inline z_owned_str_t z_keyexpr_ptr_to_string(z_keyexpr_t* key_expr_ptr) {
+    return z_keyexpr_to_string(*key_expr_ptr);
+}
