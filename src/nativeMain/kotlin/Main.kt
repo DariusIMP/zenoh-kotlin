@@ -54,39 +54,20 @@ fun publisher() {
     }
 
     println("Declaring Publisher on $keyExpression...")
-    val optionsDefault = z_publisher_options_default()
-    val pub = z_declare_publisher(
-        z_session_loan(session),
-        z_keyexpr(keyExpression.cstr.getBytes().refTo(0)),
-        optionsDefault
-    )
-    if (!z_publisher_check(pub)) {
-        println("Unable to declare Publisher for key expression!")
-        return
-    }
+    val publisher = Publisher(session, keyExpression)
 
     var idx = 0
     var buff = ""
     while (true) {
         sleep(1)
         buff = "[$idx] $value"
-        var options = z_publisher_put_options_default()
-        println("Putting Data ('$keyExpression': '$buff')...")
-        val result = z_publisher_put(
-            z_publisher_loan(pub.getBytes().refTo(0) as CValuesRef<z_owned_publisher_t>),
-            buff.cstr.getBytes().toUByteArray().refTo(0),
-            buff.length.toULong(),
-            options
-        )
 
-        if (result < 0) {
-            println("Put failed!")
-        }
+        println("Putting Data ('$keyExpression': '$buff')...")
+        publisher.put(buff.encodeToByteArray())
 
         idx += 1
     }
 
-    z_undeclare_publisher(pub)
     z_close(session)
 }
 
@@ -122,7 +103,7 @@ fun subscriber() {
 }
 
 fun main(args: Array<String>) {
-//    publisher()
-    subscriber()
+    publisher()
+//    subscriber()
 //    put()
 }

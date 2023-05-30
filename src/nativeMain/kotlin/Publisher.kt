@@ -4,23 +4,23 @@ import zenohc.*
 /**
  * Zenoh publisher
  */
-class Publisher(private val session: CValue<z_session_t>, private val keyExpr: String) {
+class Publisher(session: CValue<z_owned_session_t>, private val keyExpr: String) {
 
-    private val zenoh_pub: CValue<z_owned_publisher_t>
+    private val zenohPub: CValue<z_owned_publisher_t>
 
     init {
         val optionsDefault = z_publisher_options_default()
-        this.zenoh_pub = z_declare_publisher(
-            session,
+        this.zenohPub = z_declare_publisher(
+            z_session_loan(session),
             z_keyexpr(keyExpr.cstr.getBytes().refTo(0)),
             optionsDefault
         )
     }
 
-    public fun put(input: ByteArray) {
+    fun put(input: ByteArray) {
         val options = z_publisher_put_options_default()
         val result = z_publisher_put(
-            z_publisher_loan(zenoh_pub.getBytes().refTo(0) as CValuesRef<z_owned_publisher_t>),
+            z_publisher_loan(zenohPub.getBytes().refTo(0) as CValuesRef<z_owned_publisher_t>),
             input.toUByteArray().refTo(0),
             input.size.toULong(),
             options
@@ -31,6 +31,6 @@ class Publisher(private val session: CValue<z_session_t>, private val keyExpr: S
     }
 
     protected fun finalize() {
-        z_undeclare_publisher(zenoh_pub)
+        z_undeclare_publisher(zenohPub)
     }
 }

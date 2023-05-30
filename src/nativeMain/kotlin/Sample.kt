@@ -8,9 +8,10 @@ import zenohc.z_str_loan
  */
 class Sample(private val sample: CPointer<z_sample_t>) {
 
-    private val keyExpr: String
-    private val payload: ByteArray
-    private val kind: Kind
+    val keyExpr: String
+    val payload: ByteArray
+    val kind: Kind
+
     enum class Kind {
         PUT,
         DELETE,
