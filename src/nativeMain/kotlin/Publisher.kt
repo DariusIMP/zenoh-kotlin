@@ -1,0 +1,36 @@
+import kotlinx.cinterop.*
+import zenohc.*
+
+/**
+ * Zenoh publisher
+ */
+class Publisher(private val session: CValue<z_session_t>, private val keyExpr: String) {
+
+    private val zenoh_pub: CValue<z_owned_publisher_t>
+
+    init {
+        val optionsDefault = z_publisher_options_default()
+        this.zenoh_pub = z_declare_publisher(
+            session,
+            z_keyexpr(keyExpr.cstr.getBytes().refTo(0)),
+            optionsDefault
+        )
+    }
+
+    public fun put(input: ByteArray) {
+        val options = z_publisher_put_options_default()
+        val result = z_publisher_put(
+            z_publisher_loan(zenoh_pub.getBytes().refTo(0) as CValuesRef<z_owned_publisher_t>),
+            input.toUByteArray().refTo(0),
+            input.size.toULong(),
+            options
+        )
+        if (result < 0) {
+            throw Exception("Put failed!")
+        }
+    }
+
+    protected fun finalize() {
+        z_undeclare_publisher(zenoh_pub)
+    }
+}

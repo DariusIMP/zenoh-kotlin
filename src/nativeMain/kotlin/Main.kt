@@ -90,17 +90,8 @@ fun publisher() {
     z_close(session)
 }
 
-fun subDataHandler(sample: CPointer<z_sample_t>?, args: COpaquePointer?) {
-    val sample = sample?.pointed!!
-    val payloadSize = sample.payload.len
-    val sampleType = if (sample.kind.toInt() == 0) "PUT" else "DELETE"
-    val keyExpr = z_keyexpr_ptr_to_string(sample.keyexpr.ptr)
-    printf(
-        ">> [Subscriber] Received %s ('%s': '%.*s')\n",
-        sampleType,
-        keyExpr,
-        payloadSize.toInt(), sample.payload.start
-    )
+fun callbackSample(sample: Sample) {
+    println(sample)
 }
 
 fun subscriber() {
@@ -115,23 +106,8 @@ fun subscriber() {
         return
     }
 
-    println("Declaring Subscriber on $keyExpression...")
-    val callback = cValue<z_owned_closure_sample_t> {
-        call = staticCFunction(::subDataHandler)
-    }
-
-    val sub = z_declare_subscriber(
-        z_session_loan(session),
-        z_keyexpr(keyExpression.cstr.getBytes().refTo(0)),
-        callback,
-        z_subscriber_options_default()
-    )
-
-    if (!z_subscriber_check(sub)) {
-        println("Unable to declare Subscriber for key expression!")
-        return
-    }
-
+    val subscriber = Subscriber(z_session_loan(session), keyExpression, ::callbackSample)
+    val pinsub = subscriber.pin()
     println("Enter 'q' to quit...")
     var c = '0'
     while (c != 'q') {
@@ -141,12 +117,12 @@ fun subscriber() {
         }
     }
 
-    z_undeclare_subscriber(sub)
+    pinsub.unpin()
     z_close(session)
 }
 
 fun main(args: Array<String>) {
-    publisher()
-//    subscriber()
+//    publisher()
+    subscriber()
 //    put()
 }
