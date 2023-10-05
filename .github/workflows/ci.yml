@@ -14,8 +14,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  NDK_REVISION: r26-rc1
-  NDK_VERSION: 26.0.10636728
+  NDK_REVISION: r26
+  NDK_VERSION: 26.0.10792818
 
 jobs:
   ci:
@@ -37,7 +37,7 @@ jobs:
       - uses: nttld/setup-ndk@v1
         id: setup-ndk
         with:
-          ndk-version: r25c
+          ndk-version: r26
           add-to-path: false
           local-cache: true
 
