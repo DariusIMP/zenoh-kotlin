@@ -14,6 +14,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  NDK_REVISION: r26-rc1
+  NDK_VERSION: 26.0.10636728
 
 jobs:
   ci:
@@ -37,6 +39,11 @@ jobs:
         with:
           ndk-version: r25c
           add-to-path: false
+          local-cache: true
+
+      - name: Setup NDK
+        run: |
+          ln -s "${{steps.setup-ndk.outputs.ndk-path}}" "/usr/local/lib/android/sdk/ndk/${{env.NDK_VERSION}}"
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -61,5 +68,3 @@ jobs:
 
       - name: Gradle Test
         run: gradle jvmTest
-        env:
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
