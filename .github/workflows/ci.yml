@@ -14,8 +14,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  NDK_REVISION: r26
-  NDK_VERSION: 26.0.10792818
 
 jobs:
   ci:
