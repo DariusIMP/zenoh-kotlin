@@ -39,11 +39,8 @@ jobs:
         with:
           ndk-version: r26
           add-to-path: false
-          local-cache: true
-
-      - name: Setup NDK
-        run: |
-          ln -s "${{steps.setup-ndk.outputs.ndk-path}}" "/usr/local/lib/android/sdk/ndk/${{env.NDK_VERSION}}"
+#          local-cache: true
+          link-to-sdk: true
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -67,4 +64,4 @@ jobs:
         run: cargo build --verbose
 
       - name: Gradle Test
-        run: gradle jvmTest
+        run: gradle jvmTest --info
