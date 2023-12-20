@@ -1,3 +1,7 @@
+import org.jetbrains.dokka.versioning.VersioningConfiguration
+import org.jetbrains.dokka.versioning.VersioningPlugin
+import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
+
 //
 // Copyright (c) 2023 ZettaScale Technology
 //
@@ -13,7 +17,7 @@
 //
 
 group = "io.zenoh"
-version = "0.11.0-dev"
+version = "0.10.1-rc"
 
 plugins {
     id("com.android.library")
@@ -147,5 +151,18 @@ tasks.whenObjectAdded {
     if ((this.name == "mergeDebugJniLibFolders" || this.name == "mergeReleaseJniLibFolders")) {
         this.dependsOn("cargoBuild")
         this.inputs.dir(buildDir.resolve("rustJniLibs/android"))
+    }
+}
+
+val dokkaPlugin by configurations
+dependencies {
+    dokkaPlugin("org.jetbrains.dokka:versioning-plugin:1.9.10")
+}
+
+val previousVersionsDirectory = project.rootProject.projectDir.resolve("documentation")
+tasks.dokkaHtml {
+    pluginConfiguration<VersioningPlugin, VersioningConfiguration> {
+        renderVersionsNavigationOnAllPages = true
+        olderVersionsDir = file(previousVersionsDirectory)
     }
 }
