@@ -1,22 +1,32 @@
 name: Publish JVM
 
 on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
   release:
     types: [published]
-  workflow_call:
-    inputs:
-      version:
-        required: false
-        type: string
-        description: 'The publication version'
-        default: '0.11.0-rc'
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
   JNI_LIB_PATHS: jni-libs  # Edit on the inner build.gradle.kts file as well.
+  VERSION: 0.11.0-rc
 
 jobs:
+  determine_package_version:
+    name: Determine package version to publish (snapshot or release)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine package version
+        run: |
+          if [ "${{ github.event.action }}" == "closed" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "export PACKAGE_VERSION=${{ env.VERSION }}-SNAPSHOT" >> $GITHUB_ENV
+          fi
+          echo "Publishing '${{ env.PACKAGE_VERSION }}'..."
+
   builds:
     name: Build for ${{ matrix.job.target }} on ${{ matrix.job.os }}
     if: ${{ !(github.event.inputs.build == 'false') }}
@@ -163,6 +173,6 @@ jobs:
       - name: Gradle Publish JVM Package
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: publishJvmPublicationToGithubPackagesRepository -PzenohVersion=${{ inputs.version }}
+          arguments: publishJvmPublicationToGithubPackagesRepository -PzenohVersion=${{ env.VERSION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
