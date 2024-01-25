@@ -1,19 +1,18 @@
 name: Publish Android
 
 on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
   release:
     types: [published]
-  workflow_call:
-    inputs:
-      version:
-        required: false
-        type: string
-        description: 'The publication version'
-        default: '0.11.0-rc'
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
+  VERSION: 0.11.0-rc
 
 jobs:
   publish_android_package:
@@ -23,6 +22,12 @@ jobs:
       contents: read
       packages: write
     steps:
+      - name: Determine package version
+        run: |
+          if [ "${{ github.event.action }}" == "closed" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "PACKAGE_VERSION=${{ env.VERSION }}-SNAPSHOT" >> "$GITHUB_ENV"
+          fi
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v3
@@ -59,6 +64,6 @@ jobs:
       - name: Gradle Publish Android Package
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: publishAndroidReleasePublicationToGithubPackagesRepository -PzenohVersion=${{ inputs.version }}
+          arguments: publishAndroidReleasePublicationToGithubPackagesRepository -PzkVersion=${{ env.PACKAGE_VERSION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
