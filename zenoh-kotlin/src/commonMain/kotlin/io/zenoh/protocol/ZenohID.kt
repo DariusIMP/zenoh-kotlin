@@ -14,7 +14,32 @@
 
 package io.zenoh.protocol
 
+import io.zenoh.jni.JNIZenohID
+
 /**
  * The global unique id of a Zenoh peer.
  */
-data class ZenohID(val id: String)
+data class ZenohID internal constructor(private val bytes: ByteArray) {
+
+    val id = JNIZenohID.getIdViaJNI(bytes)
+
+    override fun toString(): String {
+        return id
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ZenohID
+
+        return true
+//        return JNIZenohID.equalsViaJNI(bytes, other.bytes)
+    }
+
+    override fun hashCode(): Int {
+        var result = bytes.contentHashCode()
+        result = 31 * result + id.hashCode()
+        return result
+    }
+}
