@@ -15,14 +15,18 @@
 use std::collections::HashMap;
 
 use jni::{
-    objects::{JByteArray, JClass, JList, JMap, JObject},
+    objects::{JByteArray, JClass, JList, JMap, JObject, JString},
     sys::{jbyteArray, jobject},
     JNIEnv,
 };
 use zenoh::bytes::ZBytes;
 use zenoh_ext::{z_deserialize, z_serialize};
 
-use crate::{errors::ZResult, utils::bytes_to_java_array, zerror};
+use crate::{
+    errors::ZResult,
+    utils::{bytes_to_java_array, decode_string},
+    zerror,
+};
 use crate::{throw_exception, utils::decode_byte_array};
 
 ///
@@ -44,9 +48,14 @@ pub extern "C" fn Java_io_zenoh_jni_JNIZBytes_serializeIntoMapViaJNI(
     mut env: JNIEnv,
     _class: JClass,
     map: JObject,
+    keyType: JString,
+    valueType: JString,
 ) -> jbyteArray {
     || -> ZResult<jobject> {
-        let zbytes = java_map_to_zbytes(&mut env, &map).map_err(|err| zerror!(err))?;
+        let key_type = decode_string(&mut env, &keyType)?;
+        let value_type = decode_string(&mut env, &valueType)?;
+        let zbytes =
+            java_map_to_zbytes(&mut env, &map, key_type, value_type).map_err(|err| zerror!(err))?;
         let byte_array = bytes_to_java_array(&env, &zbytes)?;
         Ok(byte_array.as_raw())
     }()
@@ -56,16 +65,23 @@ pub extern "C" fn Java_io_zenoh_jni_JNIZBytes_serializeIntoMapViaJNI(
     })
 }
 
-fn java_map_to_zbytes(env: &mut JNIEnv, map: &JObject) -> jni::errors::Result<ZBytes> {
+fn java_map_to_zbytes(
+    env: &mut JNIEnv,
+    map: &JObject,
+    key_type: String,
+    value_type: String,
+) -> jni::errors::Result<ZBytes> {
     let jmap = JMap::from_env(env, map)?;
     let mut iterator = jmap.iter(env)?;
     let mut rust_map: HashMap<Vec<u8>, Vec<u8>> = HashMap::new();
     while let Some((key, value)) = iterator.next(env)? {
         let key_bytes = env.convert_byte_array(env.auto_local(JByteArray::from(key)))?;
         let value_bytes = env.convert_byte_array(env.auto_local(JByteArray::from(value)))?;
+
+
         rust_map.insert(key_bytes, value_bytes);
     }
-    Ok(z_serialize(&rust_map))
+    Ok(z_serialize<>(&rust_map))
 }
 
 /// Deserializes a serialized bytearray map, returning the original map.

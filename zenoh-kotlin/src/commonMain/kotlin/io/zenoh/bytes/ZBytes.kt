@@ -201,46 +201,44 @@ import kotlin.reflect.typeOf
  * check(inputMapFoo == outputMapFoo)
  * ```
  */
-class ZBytes internal constructor(internal val bytes: ByteArray) : IntoZBytes {
+class ZBytes internal constructor(internal val bytes: ByteArray, internal val type: String) : IntoZBytes {
 
     companion object {
         fun from(intoZBytes: IntoZBytes) = intoZBytes.into()
-        fun from(string: String) = ZBytes(string.toByteArray())
-        fun from(byteArray: ByteArray) = ZBytes(byteArray)
+        fun from(string: String) = ZBytes(string.toByteArray(), "String")
+        fun from(byteArray: ByteArray) = ZBytes(byteArray, "ByteArray")
         fun from(number: Number): ZBytes {
-            val byteArray = when (number) {
-                is Byte -> byteArrayOf(number)
+            val pair = when (number) {
+                is Byte -> byteArrayOf(number) to Byte::class.java.simpleName
                 is Short -> ByteBuffer.allocate(Short.SIZE_BYTES).apply {
                     order(ByteOrder.LITTLE_ENDIAN)
                     putShort(number)
-                }.array()
+                }.array() to Short::class.java.simpleName
 
                 is Int -> ByteBuffer.allocate(Int.SIZE_BYTES).apply {
                     order(ByteOrder.LITTLE_ENDIAN)
                     putInt(number)
-                }.array()
+                }.array() to Int::class.java.simpleName
 
                 is Long -> ByteBuffer.allocate(Long.SIZE_BYTES).apply {
                     order(ByteOrder.LITTLE_ENDIAN)
                     putLong(number)
-                }.array()
+                }.array() to Long::class.java.simpleName
 
                 is Float -> ByteBuffer.allocate(Float.SIZE_BYTES).apply {
                     order(ByteOrder.LITTLE_ENDIAN)
                     putFloat(number)
-                }.array()
+                }.array() to Float::class.java.simpleName
 
                 is Double -> ByteBuffer.allocate(Double.SIZE_BYTES).apply {
                     order(ByteOrder.LITTLE_ENDIAN)
                     putDouble(number)
-                }.array()
+                }.array() to Double::class.java.simpleName
 
                 else -> throw IllegalArgumentException("Unsupported number type")
             }
-            return ZBytes(byteArray)
+            return ZBytes(pair.first, pair.second)
         }
-
-
     }
 
     fun toByteArray() = bytes
@@ -287,7 +285,7 @@ fun String.into(): ZBytes {
 }
 
 fun ByteArray.into(): ZBytes {
-    return ZBytes(this)
+    return ZBytes(this, ByteArray::class.java.simpleName)
 }
 
 @Throws(ZError::class)
