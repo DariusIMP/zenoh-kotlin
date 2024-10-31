@@ -25,6 +25,7 @@ import io.zenoh.qos.QoS
 import io.zenoh.bytes.IntoZBytes
 import io.zenoh.bytes.ZBytes
 import io.zenoh.config.ZenohId
+import io.zenoh.liveliness.Liveliness
 import io.zenoh.pubsub.Delete
 import io.zenoh.pubsub.Publisher
 import io.zenoh.pubsub.Put
@@ -692,6 +693,13 @@ class Session private constructor(private val config: Config) : AutoCloseable {
     ): Result<Unit> {
         val delete = Delete(keyExpr, qos, attachment?.into(), reliability)
         return resolveDelete(keyExpr, delete)
+    }
+
+    /**
+     * Obtain a [Liveliness] instance tied t o this Zenoh session.
+     */
+    fun liveliness(): Liveliness {
+        TODO()
     }
 
     /** Returns if session is open or has been closed. */
