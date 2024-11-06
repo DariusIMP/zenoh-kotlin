@@ -35,7 +35,13 @@ import java.time.Duration
 
 internal object JNILiveliness {
 
-    fun <R> get(keyExpr: KeyExpr, callback: Callback<Reply>, receiver: R, timeout: Duration): Result<R> = runCatching {
+    fun <R> get(
+        jniSession: JNISession,
+        keyExpr: KeyExpr,
+        callback: Callback<Reply>,
+        receiver: R,
+        timeout: Duration
+    ): Result<R> = runCatching {
         val getCallback = JNIGetCallback {
                 replierId: ByteArray?,
                 success: Boolean,
@@ -76,16 +82,28 @@ internal object JNILiveliness {
             }
             callback.run(reply)
         }
-        getViaJNI(keyExpr.jniKeyExpr?.ptr ?: 0, keyExpr.keyExpr, getCallback, timeout.toMillis())
+        getViaJNI(
+            jniSession.sessionPtr.get(),
+            keyExpr.jniKeyExpr?.ptr ?: 0,
+            keyExpr.keyExpr,
+            getCallback,
+            timeout.toMillis()
+        )
         receiver
     }
 
-    fun declareToken(keyExpr: KeyExpr): LivelinessToken {
-        val ptr = declareTokenViaJNI(keyExpr.jniKeyExpr?.ptr ?: 0, keyExpr.keyExpr)
+    fun declareToken(jniSession: JNISession, keyExpr: KeyExpr): LivelinessToken {
+        val ptr = declareTokenViaJNI(jniSession.sessionPtr.get(), keyExpr.jniKeyExpr?.ptr ?: 0, keyExpr.keyExpr)
         return LivelinessToken(JNILivelinessToken(ptr))
     }
 
-    fun <R> declareSubscriber(keyExpr: KeyExpr, callback: Callback<Sample>, receiver: R, history: Boolean): Result<Subscriber<R>> = runCatching {
+    fun <R> declareSubscriber(
+        jniSession: JNISession,
+        keyExpr: KeyExpr,
+        callback: Callback<Sample>,
+        receiver: R,
+        history: Boolean
+    ): Result<Subscriber<R>> = runCatching {
         val subCallback =
             JNISubscriberCallback { keyExpr2, payload, encodingId, encodingSchema, kind, timestampNTP64, timestampIsValid, attachmentBytes, express: Boolean, priority: Int, congestionControl: Int ->
                 val timestamp = if (timestampIsValid) TimeStamp(timestampNTP64) else null
@@ -100,13 +118,31 @@ internal object JNILiveliness {
                 )
                 callback.run(sample)
             }
-        val ptr = declareSubscriberViaJNI(keyExpr.jniKeyExpr?.ptr ?: 0, keyExpr.keyExpr, subCallback, history)
+        val ptr = declareSubscriberViaJNI(
+            jniSession.sessionPtr.get(),
+            keyExpr.jniKeyExpr?.ptr ?: 0,
+            keyExpr.keyExpr,
+            subCallback,
+            history
+        )
         Subscriber(keyExpr, receiver, JNISubscriber(ptr))
     }
 
-    private external fun getViaJNI(keyExprPtr: Long, keyExprString: String, callback: JNIGetCallback, timeoutMs: Long)
+    private external fun getViaJNI(
+        sessionPtr: Long,
+        keyExprPtr: Long,
+        keyExprString: String,
+        callback: JNIGetCallback,
+        timeoutMs: Long
+    )
 
-    private external fun declareTokenViaJNI(keyExprPtr: Long, keyExprString: String): Long
+    private external fun declareTokenViaJNI(sessionPtr: Long, keyExprPtr: Long, keyExprString: String): Long
 
-    private external fun declareSubscriberViaJNI(keyExprPtr: Long, keyExprString: String, callback: JNISubscriberCallback, history: Boolean): Long
+    private external fun declareSubscriberViaJNI(
+        sessionPtr: Long,
+        keyExprPtr: Long,
+        keyExprString: String,
+        callback: JNISubscriberCallback,
+        history: Boolean
+    ): Long
 }

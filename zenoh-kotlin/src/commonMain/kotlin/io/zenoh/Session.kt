@@ -59,13 +59,13 @@ import java.time.Duration
  */
 class Session private constructor(private val config: Config) : AutoCloseable {
 
-    private var jniSession: JNISession? = null
+    internal var jniSession: JNISession? = null
 
     private var declarations = mutableListOf<SessionDeclaration>()
 
     companion object {
 
-        private val sessionClosedException = ZError("Session is closed.")
+        internal val sessionClosedException = ZError("Session is closed.")
 
         /**
          * Open a [Session] with the provided [Config].
@@ -696,10 +696,10 @@ class Session private constructor(private val config: Config) : AutoCloseable {
     }
 
     /**
-     * Obtain a [Liveliness] instance tied t o this Zenoh session.
+     * Obtain a [Liveliness] instance tied to this Zenoh session.
      */
     fun liveliness(): Liveliness {
-        TODO()
+        return Liveliness(this)
     }
 
     /** Returns if session is open or has been closed. */

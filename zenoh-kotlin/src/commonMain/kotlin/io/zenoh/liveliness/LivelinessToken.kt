@@ -17,10 +17,11 @@ package io.zenoh.liveliness
 import io.zenoh.jni.JNILivelinessToken
 import io.zenoh.session.SessionDeclaration
 
-class LivelinessToken internal constructor(private val jniLivelinessToken: JNILivelinessToken): SessionDeclaration {
+class LivelinessToken internal constructor(private var jniLivelinessToken: JNILivelinessToken?): SessionDeclaration {
 
     override fun undeclare() {
-        TODO("Not yet implemented")
+        jniLivelinessToken?.undeclare()
+        jniLivelinessToken = null
     }
 
 }
