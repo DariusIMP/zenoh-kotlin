@@ -151,7 +151,7 @@ kotlin {
         repositories {
             maven {
                 name = "GithubPackages"
-                url = uri("https://maven.pkg.github.com/eclipse-zenoh/zenoh-kotlin")
+                url = uri("https://maven.pkg.github.com/DariusIMP/zenoh-kotlin")
                 credentials {
                     username = System.getenv("GITHUB_ACTOR")
                     password = System.getenv("GITHUB_TOKEN")
@@ -173,15 +173,15 @@ kotlin {
     }
 }
 
-signing {
-    isRequired = isRemotePublication
-    useInMemoryPgpKeys(System.getenv("ORG_GPG_SUBKEY_ID"), System.getenv("ORG_GPG_PRIVATE_KEY"), System.getenv("ORG_GPG_PASSPHRASE"))
-    sign(publishing.publications)
-}
-
-tasks.withType<PublishToMavenRepository>().configureEach {
-    dependsOn(tasks.withType<Sign>())
-}
+//signing {
+//    isRequired = isRemotePublication
+//    useInMemoryPgpKeys(System.getenv("ORG_GPG_SUBKEY_ID"), System.getenv("ORG_GPG_PRIVATE_KEY"), System.getenv("ORG_GPG_PASSPHRASE"))
+//    sign(publishing.publications)
+//}
+//
+//tasks.withType<PublishToMavenRepository>().configureEach {
+//    dependsOn(tasks.withType<Sign>())
+//}
 
 tasks.withType<Test> {
     doFirst {
